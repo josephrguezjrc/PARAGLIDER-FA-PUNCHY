@@ -53,6 +53,7 @@ public class ParagliderClientMod implements ParagliderMod.IClient, net.fabricmc.
   net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry.addLast(ParagliderAPI.id("movement_debug"),ParagliderGuiLayers::renderMovementDebug);
   net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry.getInstance().register(WindParticleProvider.PARTICLE_TYPE,WindParticleProvider::new);
   tictim.paraglider.fabric.FabricClientEvents.register();
+  tictim.paraglider.client.EmfCompat.init();
   ParagliderClientSettingsIO.load(null);
  }
 

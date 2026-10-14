@@ -1,8 +1,14 @@
 plugins { id 'fabric-loom' version '1.14.10' }
-version='21.11.0-fabric-port.1'
+version='21.11.0-fabric-port.2'
 group='tictim.paraglider'
 base { archivesName='Paraglider-fabric-1.21.11' }
-repositories { mavenCentral() }
+repositories {
+ mavenCentral()
+ exclusiveContent {
+  forRepository { maven { url = "https://api.modrinth.com/maven" } }
+  filter { includeGroup "maven.modrinth" }
+ }
+}
 dependencies {
  minecraft 'com.mojang:minecraft:1.21.11'
  mappings loom.officialMojangMappings()
@@ -12,6 +18,9 @@ dependencies {
  modImplementation files('libs/forgeconfigapiport.jar')
  implementation 'com.electronwill.night-config:core:3.8.3'
  implementation 'com.electronwill.night-config:toml:3.8.3'
+ // Entity Model Features (EMF): only needed to compile the optional compatibility hook.
+ // At runtime the hook is skipped unless EMF is actually installed.
+ modCompileOnly "maven.modrinth:entity-model-features:3.3.2"
 }
 java { toolchain.languageVersion=JavaLanguageVersion.of(21); withSourcesJar() }
 sourceSets.main.resources.srcDir('src/generated/resources')
