@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "paraglider_test",
+  "version": "1",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-gametest": [
+      "tictim.paraglider.test.PortGameTests"
+    ]
+  }
+}

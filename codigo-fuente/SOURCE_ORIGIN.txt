@@ -1,0 +1,6 @@
+https://github.com/Tictim/Paraglider
+Branch: dev/1.21.11
+Commit: 4d315c7d6196ae0292e96d7e618f801d9c50344c
+Original author: Tictim
+License: GPL-3.0-only
+Unofficial Fabric 1.21.11 adaptation.

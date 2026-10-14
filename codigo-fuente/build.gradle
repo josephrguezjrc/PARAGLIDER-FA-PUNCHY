@@ -1,0 +1,31 @@
+plugins { id 'fabric-loom' version '1.14.10' }
+version='21.11.0-fabric-port.1'
+group='tictim.paraglider'
+base { archivesName='Paraglider-fabric-1.21.11' }
+repositories { mavenCentral() }
+dependencies {
+ minecraft 'com.mojang:minecraft:1.21.11'
+ mappings loom.officialMojangMappings()
+ modImplementation 'net.fabricmc:fabric-loader:0.18.4'
+ modImplementation 'net.fabricmc.fabric-api:fabric-api:0.141.1+1.21.11'
+ compileOnly 'org.jetbrains:annotations:26.0.2'
+ modImplementation files('libs/forgeconfigapiport.jar')
+ implementation 'com.electronwill.night-config:core:3.8.3'
+ implementation 'com.electronwill.night-config:toml:3.8.3'
+}
+java { toolchain.languageVersion=JavaLanguageVersion.of(21); withSourcesJar() }
+sourceSets.main.resources.srcDir('src/generated/resources')
+tasks.withType(JavaCompile).configureEach { options.release=21 }
+
+loom { accessWidenerPath = file("src/main/resources/paraglider.accesswidener") }
+tasks.withType(JavaCompile).configureEach { options.compilerArgs += ["-Xmaxerrs", "300"] }
+
+if (project.hasProperty('validationTest')) {
+ sourceSets { gametest { compileClasspath = sourceSets.main.compileClasspath + sourceSets.main.output; runtimeClasspath = sourceSets.main.runtimeClasspath + sourceSets.main.output + output } }
+ configurations.gametestImplementation.extendsFrom(configurations.implementation, configurations.modImplementation)
+ configurations.gametestRuntimeOnly.extendsFrom(configurations.runtimeOnly)
+ loom {
+  mods { paraglider { sourceSet sourceSets.main }; paraglider_test { sourceSet sourceSets.gametest } }
+  runs { gametest { server(); name 'Paragliders integration checks'; source sourceSets.gametest; runDir 'run-gametest'; vmArg '-Dfabric-api.gametest=true'; vmArg '-Dfabric-api.gametest.report-file=reports/gametest-results.xml' } }
+ }
+}

@@ -1,0 +1,28 @@
+{
+  "required": true,
+  "package": "tictim.paraglider.fabric.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "PlayerTickMixin",
+    "UsingItemMixin",
+    "ParagliderDurabilityMixin",
+    "BrewingMixin",
+    "BrewingSlotMixin",
+    "WindChunkMixin",
+    "LootTableMixin",
+    "GrindstoneMixin",
+    "RepairRecipeMixin"
+  ],
+  "client": [
+    "GuiGraphicsAccessor",
+    "ConditionalPropertiesAccessor",
+    "PlayerPoseMixin",
+    "ParagliderInteractionMixin",
+    "ParagliderCrosshairMixin",
+    "ParagliderOutlineMixin",
+    "ParagliderHandMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "paraglider",
+  "version": "21.11.0-fabric-port.1",
+  "name": "Paragliders (Fabric Port)",
+  "environment": "*",
+  "license": "GPL-3.0-only",
+  "authors": [
+    "Tictim",
+    "Fabric adaptation for Joseph"
+  ],
+  "entrypoints": {
+    "main": [
+      "tictim.paraglider.ParagliderMod"
+    ],
+    "client": [
+      "tictim.paraglider.ParagliderClientMod"
+    ],
+    "paraglider-plugin": [
+      "tictim.paraglider.plugin.ParagliderDefaultPlugin"
+    ]
+  },
+  "depends": {
+    "minecraft": "1.21.11",
+    "java": ">=21",
+    "fabricloader": ">=0.18.4",
+    "fabric-api": ">=0.141.1",
+    "forgeconfigapiport": ">=21.11.0"
+  },
+  "mixins": [
+    "paraglider.fabric.mixins.json"
+  ],
+  "accessWidener": "paraglider.accesswidener"
+}

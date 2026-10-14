@@ -1,0 +1,183 @@
+package tictim.paraglider.config;
+
+import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.resources.Identifier;
+import net.neoforged.neoforge.common.ModConfigSpec;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import tictim.paraglider.ParagliderMod;
+import tictim.paraglider.api.movement.ParagliderPlayerStates;
+import tictim.paraglider.api.movement.PlayerState;
+import tictim.paraglider.impl.movement.PlayerStateMap;
+import tictim.paraglider.impl.movement.SimplePlayerState;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Consumer;
+
+import static tictim.paraglider.api.ParagliderAPI.MODID;
+
+public class PlayerStateMapConfig {
+	public static final String FILENAME = "paraglider-player-states.toml";
+
+	public final ModConfigSpec spec;
+
+	private final PlayerStateMap originalStateMap;
+	private final Map<Identifier, Config> configSpecs;
+	private final List<@NotNull Consumer<@NotNull PlayerStateMap>> onUpdateCallbacks = new ArrayList<>();
+
+	private @Nullable PlayerStateMap configuredStateMap;
+
+	public PlayerStateMapConfig(@NotNull PlayerStateMap originalStateMap) {
+		this.originalStateMap = originalStateMap;
+
+		// sort player states, always write paragliders state at the top
+		Map<String, Map<String, PlayerState>> states = new Object2ObjectAVLTreeMap<>((o1, o2) -> {
+			if (o1.equals(o2)) return 0;
+			if (MODID.equals(o1)) return -1;
+			if (MODID.equals(o2)) return 1;
+			return o1.compareTo(o2);
+		});
+
+		for (var e : originalStateMap.states().entrySet()) {
+			states.computeIfAbsent(e.getKey().getNamespace(), s -> new Object2ObjectAVLTreeMap<>())
+					.put(e.getKey().getPath(), e.getValue());
+		}
+
+		ModConfigSpec.Builder b = new ModConfigSpec.Builder();
+		this.configSpecs = new Object2ObjectOpenHashMap<>();
+
+		for (var e : states.entrySet()) {
+			if (e.getKey().equals(MODID)) {
+				b.comment("""
+						Configuration file for player states.
+						You can adjust stamina delta (negative value means consumption / positive value means gain) and
+						recovery delay (in ticks) of all player states registered in the game.
+						To reload the config, use the following command: /paraglider reloadPlayerStates
+						""");
+			}
+			b.push(e.getKey());
+			for (var e2 : e.getValue().entrySet()) {
+				b.push(e2.getKey());
+				PlayerState state = e2.getValue();
+
+				ModConfigSpec.DoubleValue staminaDelta = b.defineInRange("staminaDelta", state.staminaDelta(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+				ModConfigSpec.IntValue recoveryDelay = b.defineInRange("recoveryDelay", state.recoveryDelay(), 0, Integer.MAX_VALUE);
+				configSpecs.put(state.id(), new Config(staminaDelta, recoveryDelay));
+
+				b.pop();
+			}
+			b.pop();
+		}
+
+		this.spec = b.build();
+	}
+
+	public @NotNull PlayerStateMap stateMap() {
+		return configuredStateMap != null ? configuredStateMap : originalStateMap;
+	}
+
+	public @NotNull PlayerStateMap originalStateMap() {
+		return originalStateMap;
+	}
+	public @Nullable PlayerStateMap configuredStateMap() {
+		return configuredStateMap;
+	}
+
+	public void addCallback(@NotNull Consumer<@NotNull PlayerStateMap> callback) {
+		this.onUpdateCallbacks.add(Objects.requireNonNull(callback, "callback == null"));
+	}
+
+	public void removeCallbacks() {
+		this.onUpdateCallbacks.clear();
+	}
+
+	public void reload(@Nullable Callback callback) {
+		reload(Runnable::run, callback);
+	}
+
+	public void reload(@NotNull Consumer<@NotNull Runnable> onUpdatedCallbackDispatcher,
+	                   @Nullable Callback callback) {
+		PlayerStateMap prevStateMap = stateMap();
+		RuntimeException exception = null;
+
+		try {
+			reloadInternal();
+		} catch (RuntimeException ex) {
+			this.configuredStateMap = null;
+			ParagliderMod.LOGGER.error("Cannot load state map due to an error", ex);
+			exception = ex;
+		}
+
+		PlayerStateMap stateMap = stateMap();
+		boolean contentUpdated = !PlayerStateMap.isSame(prevStateMap, stateMap);
+
+		if (contentUpdated) {
+			for (Consumer<PlayerStateMap> onUpdate : this.onUpdateCallbacks) {
+				onUpdatedCallbackDispatcher.accept(() -> onUpdate.accept(stateMap));
+			}
+		}
+
+		if (callback != null) {
+			if (exception == null) {
+				onUpdatedCallbackDispatcher.accept(() -> callback.onSuccess(stateMap, contentUpdated));
+			} else {
+				RuntimeException finalException = exception;
+				onUpdatedCallbackDispatcher.accept(() -> callback.onFail(stateMap, finalException, contentUpdated));
+			}
+		}
+	}
+
+	protected void reloadInternal() {
+		boolean paraglidingConsumesStamina = Cfg.get().paraglidingConsumesStamina();
+		boolean runningConsumesStamina = Cfg.get().runningConsumesStamina();
+
+		@Nullable Map<Identifier, PlayerState> newStates = null;
+		for (var e : this.originalStateMap.states().entrySet()) {
+			Identifier id = e.getKey();
+			PlayerState state = e.getValue();
+
+			Config config = this.configSpecs.get(id);
+
+			double staminaDelta = config.staminaDelta.get();
+			int recoveryDelay = config.recoveryDelay.get();
+
+			if (Double.isNaN(staminaDelta)) {
+				staminaDelta = 0;
+			}
+
+			if (state.hasFlag(ParagliderPlayerStates.Flags.DISABLED_BY_RUNNING_CONFIG)) {
+				if (staminaDelta < 0 && !runningConsumesStamina) staminaDelta = 0;
+			}
+			if (state.hasFlag(ParagliderPlayerStates.Flags.DISABLED_BY_PARAGLIDING_CONFIG)) {
+				if (staminaDelta < 0 && !paraglidingConsumesStamina) staminaDelta = 0;
+			}
+
+			if (staminaDelta > 0 && recoveryDelay > 0) {
+				ParagliderMod.LOGGER.warn("Player state {} has both positive stamina delta ({}) and recovery delay ({}). Setting recovery value to 0.",
+						id, staminaDelta, recoveryDelay);
+				recoveryDelay = 0;
+			}
+
+			if (state.staminaDelta() == staminaDelta && state.recoveryDelay() == recoveryDelay) continue;
+
+			if (newStates == null) newStates = new Object2ObjectOpenHashMap<>(this.originalStateMap.states());
+			newStates.put(id, new SimplePlayerState(state, staminaDelta, recoveryDelay));
+		}
+
+		this.configuredStateMap = newStates == null ? null : new PlayerStateMap(newStates);
+	}
+
+	public interface Callback {
+		void onSuccess(@NotNull PlayerStateMap stateMap, boolean updated);
+		void onFail(@NotNull PlayerStateMap stateMap, @NotNull RuntimeException exception, boolean update);
+	}
+
+	protected record Config(
+			@NotNull ModConfigSpec.DoubleValue staminaDelta,
+			@NotNull ModConfigSpec.IntValue recoveryDelay
+	) {}
+}

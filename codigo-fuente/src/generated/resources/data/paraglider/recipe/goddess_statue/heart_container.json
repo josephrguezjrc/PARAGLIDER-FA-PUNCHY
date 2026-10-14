@@ -1,0 +1,20 @@
+{
+  "type": "paraglider:statue_bargain",
+  "bargainType": "paraglider:goddess_statue",
+  "demands": {
+    "items": [
+      {
+        "ingredient": "paraglider:spirit_orb",
+        "quantity": 4
+      }
+    ]
+  },
+  "offers": {
+    "heartContainers": 1
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "paraglider:heart_container_enabled"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+PARAGLIDERS — PORT FABRIC 1.21.11
+
+Instalación
+1. Usa Minecraft Java 1.21.11 con Fabric Loader 0.18.4 o posterior y Java 21.
+2. Retira el JAR anterior de Paragliders de la carpeta mods.
+3. Copia los tres JAR de la carpeta mods de este ZIP a la carpeta mods de tu instancia.
+   Si ya tienes Fabric API 0.141.1+1.21.11 y Forge Config API Port 21.11.1, conserva una sola copia de cada dependencia.
+4. Inicia Minecraft. El mod aparece como Paragliders (Fabric Port).
+
+Incluye planeador, hoja deku, resistencia, corazones, recipientes de resistencia,
+estatuas de la diosa y del demonio con sus intercambios, esencia, orbes,
+elixires, corrientes de aire, estructuras y configuración del mod original.
+Los ajustes de la rueda de resistencia se abren con Ctrl+P.
+
+Estado de validación
+Compilación y remapeo a Fabric 1.21.11 completados.
+Seis pruebas automáticas propias pasaron en un mundo de Minecraft: elixires,
+compra de corazones en estatuas, mejoras de vida/resistencia y guardado,
+planeo y consumo de resistencia, botín de orbes y codificación de vistas de intercambios.
+También pasó la prueba base de Minecraft: 7 pruebas en total.
+El cargador del cliente cargó 180 clases del mod, aplicó sus mixins y registró
+la propiedad visual del planeador. Esta comprobación no abrió una ventana de
+juego: las animaciones, la interfaz y la compatibilidad con tus otros mods
+necesitan comprobarse visualmente en tu instancia.
+
+Este es un port no oficial. Paragliders es de Tictim, bajo GPLv3.
+El código fuente completo del port y su licencia están en codigo-fuente.
+Origen: https://github.com/Tictim/Paraglider
+Base: rama dev/1.21.11, commit 4d315c7d6196ae0292e96d7e618f801d9c50344c.
